@@ -3,8 +3,6 @@ with daily_prices as (
         genre,
         venue_city,
         extract(dow from snapshot_date) as day_of_week,
-        extract(hour from ingested_at) as hour_of_day,
-        days_until_event,
         avg_price,
         min_price
     from {{ ref('stg_price_snapshots') }}
