@@ -3,7 +3,7 @@ name: Daily Ingestion
 on:
   schedule:
     - cron: '0 16 * * *'  # 9 AM PT (UTC-7)
-  workflow_dispatch: {}    # manual trigger button
+  workflow_dispatch:
 
 permissions:
   contents: write
