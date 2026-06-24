@@ -67,6 +67,8 @@ cd ~/concert-price-tracker
 git pull
 source .venv/bin/activate
 streamlit run dashboard/app.py
+
+Or view directly at: https://concert-price-tracker.streamlit.app/
 ```
 
 ## Project Structure
