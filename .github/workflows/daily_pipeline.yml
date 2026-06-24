@@ -2,7 +2,7 @@ name: Daily Ingestion
 
 on:
   schedule:
-    - cron: '0 16 * * *'  # 9 AM PT (UTC-7)
+    - cron: '0 16 * * *'
   workflow_dispatch:
 
 permissions:
@@ -26,47 +26,10 @@ jobs:
         env:
           TICKETMASTER_API_KEY: ${{ secrets.TICKETMASTER_API_KEY }}
           DUCKDB_PATH: data/concert_tracker.duckdb
-        run: python -c "
-          from ingestion.ticketmaster_client import TicketmasterClient
-          from ingestion.assets import raw_events, get_db_path, init_db, CITIES
-          from datetime import date
-          from pathlib import Path
-          import duckdb
-          import os
-
-          client = TicketmasterClient()
-          raw = client.fetch_all_events(cities=CITIES, days_ahead=90)
-          parsed = [client.parse_event(e) for e in raw]
-
-          db_path = get_db_path()
-          conn = duckdb.connect(db_path)
-          init_db(conn)
-
-          today = date.today()
-          conn.execute('DELETE FROM raw.events WHERE snapshot_date = ?', [today])
-          for row in parsed:
-              conn.execute('''
-                  INSERT INTO raw.events (
-                      event_id, name, event_date, venue_name, venue_city,
-                      venue_state, venue_capacity, genre, subgenre,
-                      artist_name, min_price, max_price, currency,
-                      status, url, snapshot_date
-                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-              ''', [
-                  row['event_id'], row['name'], row['event_date'],
-                  row['venue_name'], row['venue_city'], row['venue_state'],
-                  row['venue_capacity'], row['genre'], row['subgenre'],
-                  row['artist_name'], row['min_price'], row['max_price'],
-                  row['currency'], row['status'], row['url'], today,
-              ])
-          conn.close()
-          print(f'Ingested {len(parsed)} events for {today}')
-          "
+        run: python scripts/run_ingestion.py
 
       - name: Run dbt transforms
-        run: |
-          cd transform
-          dbt run --profiles-dir .
+        run: cd transform && dbt run --profiles-dir .
 
       - name: Commit updated database
         run: |
