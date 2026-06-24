@@ -1,9 +1,0 @@
-[32m2026-06-24 11:57:38 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - 3106 - LOGS_CAPTURED - Started capturing logs in process (pid: 3106).
-[32m2026-06-24 11:57:38 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - 3106 - raw_events - STEP_START - Started execution of step "raw_events".
-[32m2026-06-24 11:57:38 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - raw_events - Fetching events for cities: ['Seattle']
-[32m2026-06-24 11:57:40 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - raw_events - Fetched 354 raw events
-[32m2026-06-24 11:57:40 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - raw_events - Parsed 354 events
-[32m2026-06-24 11:57:48 -0700[0m - dagster - [34mINFO[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - raw_events - Inserted 354 rows for 2026-06-24
-[32m2026-06-24 11:57:48 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - 3106 - raw_events - STEP_OUTPUT - Yielded output "result" of type "Nothing". (Type check passed).
-[32m2026-06-24 11:57:48 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - 3106 - raw_events - ASSET_MATERIALIZATION - Materialized value raw_events.
-[32m2026-06-24 11:57:48 -0700[0m - dagster - [34mDEBUG[0m - __ASSET_JOB - 625cb0fb-d77b-4e1c-ad22-2671cb42ca8f - 3106 - raw_events - STEP_SUCCESS - Finished execution of step "raw_events" in 9.7s.

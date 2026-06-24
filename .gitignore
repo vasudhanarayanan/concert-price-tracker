@@ -3,8 +3,11 @@
 __pycache__/
 *.pyc
 build.log
+cron.log
 data/
 transform/target/
 transform/dbt_packages/
 transform/logs/
+transform/.user.yml
 .dagster/
+tmp*/
