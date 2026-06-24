@@ -61,6 +61,12 @@ cd transform && dbt run && cd ..
 
 # Launch dashboard
 streamlit run dashboard/app.py
+
+# Once initial setup completed (for runs after first one)
+cd ~/concert-price-tracker
+git pull
+source .venv/bin/activate
+streamlit run dashboard/app.py
 ```
 
 ## Project Structure
