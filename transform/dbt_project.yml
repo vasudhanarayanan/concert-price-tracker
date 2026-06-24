@@ -1,0 +1,17 @@
+name: concert_tracker
+version: "1.0.0"
+
+profile: concert_tracker
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+
+models:
+  concert_tracker:
+    staging:
+      +schema: staging
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table

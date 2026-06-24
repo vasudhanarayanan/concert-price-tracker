@@ -1,0 +1,10 @@
+dagster==1.9.*
+dagster-webserver==1.9.*
+dbt-core==1.9.*
+dbt-duckdb==1.9.*
+streamlit==1.41.*
+plotly==5.24.*
+requests==2.32.*
+duckdb==1.2.*
+python-dotenv==1.0.*
+pandas==2.2.*

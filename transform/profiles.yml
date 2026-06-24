@@ -1,0 +1,8 @@
+concert_tracker:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../data/concert_tracker.duckdb
+      schema: staging
+      threads: 4
