@@ -71,6 +71,35 @@ streamlit run dashboard/app.py
 Or view directly at: https://concert-price-tracker.streamlit.app/
 ```
 
+## Anomaly Detection
+
+The pipeline automatically detects unusual price movements using z-score analysis:
+
+- Events with 3+ daily snapshots get a rolling mean and standard deviation
+- Any price that moves more than 2 standard deviations from the mean is flagged
+- Price **drops** (buying opportunities) and **spikes** (demand surges) are tracked separately
+- Results are visible in the dashboard's Anomalies tab and included in email alerts
+
+## Price Alerts & Notifications
+
+Set price targets for artists or specific events. When the price drops below your target, you'll get an email.
+
+```bash
+# Add an alert
+python -m alerts.manage add --artist "Radiohead" --price 80
+
+# List active alerts
+python -m alerts.manage list
+
+# Remove an alert
+python -m alerts.manage remove --index 0
+
+# Check alerts manually (runs automatically in CI)
+python -m alerts.check_alerts --dry-run
+```
+
+Notifications use SendGrid (free tier: 100 emails/day). Set `SENDGRID_API_KEY` and `ALERT_EMAIL` in your `.env` or as GitHub Secrets for automated delivery.
+
 ## Project Structure
 
 ```
@@ -93,11 +122,16 @@ concert-price-tracker/
 │   │   └── marts/
 │   │       ├── price_curves.sql
 │   │       ├── soldout_velocity.sql
-│   │       └── best_buy_windows.sql
+│   │       ├── best_buy_windows.sql
+│   │       └── price_anomalies.sql
 │   └── seeds/
 │       └── genre_mappings.csv
+├── alerts/
+│   ├── __init__.py
+│   ├── check_alerts.py         # Alert checker + anomaly detection + email
+│   └── manage.py               # CLI to add/remove/list alerts
 ├── dashboard/
-│   └── app.py                  # Streamlit dashboard
+│   └── app.py                  # Streamlit dashboard (dark theme)
 ├── dagster_project/
 │   ├── __init__.py
 │   ├── definitions.py

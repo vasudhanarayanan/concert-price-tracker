@@ -31,10 +31,17 @@ jobs:
       - name: Run dbt transforms
         run: cd transform && dbt run --profiles-dir .
 
+      - name: Check price alerts
+        env:
+          DUCKDB_PATH: data/concert_tracker.duckdb
+          SENDGRID_API_KEY: ${{ secrets.SENDGRID_API_KEY }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+        run: python -m alerts.check_alerts
+
       - name: Commit updated database
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/concert_tracker.duckdb
+          git add data/concert_tracker.duckdb data/alerts.json
           git diff --cached --quiet || git commit -m "Daily snapshot: $(date +%Y-%m-%d)"
           git push
