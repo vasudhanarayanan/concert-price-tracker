@@ -147,7 +147,9 @@ city_filter = f"AND venue_city = '{selected_city}'" if selected_city != "All Cit
 
 
 # --- Tabs ---
-tab1, tab2, tab3, tab4 = st.tabs(["Price Curves", "Sell-Out Speed", "Best Time to Buy", "Event Explorer"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "Price Curves", "Sell-Out Speed", "Best Time to Buy", "Event Explorer", "Anomalies"
+])
 
 
 # --- Tab 1: Price Curves ---
@@ -431,3 +433,126 @@ with tab4:
         )
     else:
         st.info("No upcoming events found matching your filters.")
+
+
+# --- Tab 5: Anomalies ---
+with tab5:
+    anomaly_data = query(f"""
+        WITH event_stats AS (
+            SELECT
+                event_id,
+                AVG((min_price + max_price) / 2.0) AS mean_price,
+                STDDEV((min_price + max_price) / 2.0) AS stddev_price,
+                COUNT(*) AS n
+            FROM raw.events
+            WHERE min_price IS NOT NULL
+            GROUP BY event_id
+            HAVING COUNT(*) >= 3
+        ),
+        latest AS (
+            SELECT
+                e.event_id, e.name AS event_name, e.artist_name, e.genre, e.venue_city,
+                e.min_price, e.max_price, (e.min_price + e.max_price) / 2.0 AS avg_price,
+                e.snapshot_date, e.event_date,
+                s.mean_price, s.stddev_price,
+                (((e.min_price + e.max_price) / 2.0) - s.mean_price) / s.stddev_price AS z_score
+            FROM raw.events e
+            INNER JOIN event_stats s ON e.event_id = s.event_id
+            WHERE e.min_price IS NOT NULL AND s.stddev_price > 0
+            {genre_filter} {city_filter}
+        )
+        SELECT *,
+            CASE WHEN z_score >= 2.0 THEN 'spike'
+                 WHEN z_score <= -2.0 THEN 'drop'
+                 ELSE 'normal'
+            END AS anomaly_type
+        FROM latest
+        WHERE ABS(z_score) >= 2.0
+        ORDER BY ABS(z_score) DESC
+        LIMIT 50
+    """)
+
+    if not anomaly_data.empty:
+        drops = anomaly_data[anomaly_data["anomaly_type"] == "drop"]
+        spikes = anomaly_data[anomaly_data["anomaly_type"] == "spike"]
+
+        m1, m2, m3 = st.columns(3)
+        m1.metric("Total Anomalies", len(anomaly_data))
+        m2.metric("Price Drops", len(drops), delta=f"{len(drops)} below avg", delta_color="normal")
+        m3.metric("Price Spikes", len(spikes), delta=f"{len(spikes)} above avg", delta_color="inverse")
+
+        st.markdown("<div style='height: 1rem'></div>", unsafe_allow_html=True)
+
+        left, right = st.columns([2, 1])
+
+        with left:
+            fig = go.Figure()
+            if not drops.empty:
+                fig.add_trace(go.Bar(
+                    x=drops["artist_name"] + " — " + drops["event_name"].str[:20],
+                    y=drops["z_score"],
+                    name="Price Drops",
+                    marker_color=COLORS["success"],
+                    hovertemplate="<b>%{x}</b><br>Z-score: %{y:.2f}<extra></extra>",
+                ))
+            if not spikes.empty:
+                fig.add_trace(go.Bar(
+                    x=spikes["artist_name"] + " — " + spikes["event_name"].str[:20],
+                    y=spikes["z_score"],
+                    name="Price Spikes",
+                    marker_color=COLORS["danger"],
+                    hovertemplate="<b>%{x}</b><br>Z-score: %{y:.2f}<extra></extra>",
+                ))
+            fig.update_layout(
+                title="Price Anomalies (|z-score| >= 2.0)",
+                xaxis_title="",
+                yaxis_title="Z-Score",
+                showlegend=True,
+                legend=dict(orientation="h", y=1.12),
+                barmode="relative",
+            )
+            st.plotly_chart(style_chart(fig, height=380), use_container_width=True)
+
+        with right:
+            st.markdown("<div style='height: 3rem'></div>", unsafe_allow_html=True)
+            if not drops.empty:
+                best_deal = drops.iloc[0]
+                st.markdown("**Biggest Price Drop**")
+                st.markdown(
+                    f"{best_deal['artist_name']}<br>"
+                    f"<span style='color: {COLORS['success']}; font-size: 1.4rem; font-weight: 700;'>"
+                    f"${best_deal['avg_price']:.0f}</span> "
+                    f"<span style='color: {COLORS['muted']};'>(avg ${best_deal['mean_price']:.0f})</span>",
+                    unsafe_allow_html=True,
+                )
+                st.caption(f"Z-score: {best_deal['z_score']:.2f}")
+
+        st.markdown("#### All Detected Anomalies")
+        display_anomalies = anomaly_data[[
+            "artist_name", "event_name", "venue_city", "avg_price",
+            "mean_price", "z_score", "anomaly_type", "snapshot_date"
+        ]].rename(columns={
+            "artist_name": "Artist",
+            "event_name": "Event",
+            "venue_city": "City",
+            "avg_price": "Current $",
+            "mean_price": "Avg $",
+            "z_score": "Z-Score",
+            "anomaly_type": "Type",
+            "snapshot_date": "Date",
+        })
+        st.dataframe(
+            display_anomalies,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Current $": st.column_config.NumberColumn(format="$%.0f"),
+                "Avg $": st.column_config.NumberColumn(format="$%.0f"),
+                "Z-Score": st.column_config.NumberColumn(format="%.2f"),
+            },
+        )
+    else:
+        st.info(
+            "No anomalies detected yet. Anomalies are flagged when a price moves more than "
+            "2 standard deviations from an event's historical average (requires 3+ snapshots)."
+        )
